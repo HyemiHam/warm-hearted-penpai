@@ -4,8 +4,17 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FloatingContact from '@/components/ui-custom/FloatingContact';
 import RegisterForm from '@/components/ui-custom/RegisterForm';
+import { useAuth } from '@/contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 const Register = () => {
+  const { isAuthenticated } = useAuth();
+  
+  // 이미 로그인된 사용자는 대시보드로 리다이렉트
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
   return (
     <>
       <Navbar />
