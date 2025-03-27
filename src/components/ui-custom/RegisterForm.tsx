@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,8 +9,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 
+const WEBHOOK_URL = 'http://115.143.89.194:15678/webhook-test/new_customer';
+
 const RegisterForm = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -59,28 +62,27 @@ const RegisterForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Here you would connect to your n8n workflow
-      console.log('Sending registration data to n8n:', formData);
+      // 웹훅 호출
+      console.log('Sending registration data to webhook:', formData);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: "등록이 완료되었습니다!",
-        description: "입력하신 이메일로 추가 안내를 보내드렸습니다.",
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
       
-      // Reset form after successful submission
-      setFormData({
-        childName: '',
-        childGender: '',
-        childAge: '',
-        childInterests: '',
-        childEmail: '',
-        childBirthday: '',
-        childMbti: '',
-        parentName: '',
-        parentEmail: '',
+      if (!response.ok) {
+        throw new Error('서버 응답이 올바르지 않습니다.');
+      }
+      
+      // 성공 시 완료 페이지로 이동
+      navigate('/register/complete', { 
+        state: { 
+          success: true,
+          email: formData.parentEmail 
+        } 
       });
       
     } catch (error) {
@@ -90,7 +92,6 @@ const RegisterForm = () => {
         description: "잠시 후 다시 시도해주세요.",
         variant: "destructive",
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
