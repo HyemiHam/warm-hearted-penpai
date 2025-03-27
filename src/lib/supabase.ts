@@ -166,3 +166,86 @@ export type Database = {
     };
   };
 };
+
+// Function to create tables in Supabase (only run this when needed)
+export const createDatabaseTables = async () => {
+  try {
+    // Create users table
+    await supabase.rpc('create_table_if_not_exists', {
+      table_name: 'users',
+      columns: `
+        id uuid primary key default uuid_generate_v4(),
+        email text unique not null,
+        full_name text not null,
+        created_at timestamp with time zone default now(),
+        updated_at timestamp with time zone default now()
+      `
+    });
+    
+    // Create children table
+    await supabase.rpc('create_table_if_not_exists', {
+      table_name: 'children',
+      columns: `
+        id uuid primary key default uuid_generate_v4(),
+        parent_id uuid not null references users(id),
+        name text not null,
+        gender text not null,
+        age integer not null,
+        birthday date not null,
+        email text not null,
+        interests text not null,
+        mbti text,
+        created_at timestamp with time zone default now(),
+        updated_at timestamp with time zone default now()
+      `
+    });
+    
+    // Create conversations table
+    await supabase.rpc('create_table_if_not_exists', {
+      table_name: 'conversations',
+      columns: `
+        id uuid primary key default uuid_generate_v4(),
+        child_id uuid not null references children(id),
+        sender text not null,
+        content text not null,
+        created_at timestamp with time zone default now()
+      `
+    });
+    
+    // Create emotional_reports table
+    await supabase.rpc('create_table_if_not_exists', {
+      table_name: 'emotional_reports',
+      columns: `
+        id uuid primary key default uuid_generate_v4(),
+        child_id uuid not null references children(id),
+        report_date date not null,
+        emotions jsonb not null,
+        summary text not null,
+        keywords text[] not null,
+        recommendations text,
+        created_at timestamp with time zone default now()
+      `
+    });
+    
+    // Create inquiries table
+    await supabase.rpc('create_table_if_not_exists', {
+      table_name: 'inquiries',
+      columns: `
+        id uuid primary key default uuid_generate_v4(),
+        user_id uuid references users(id),
+        name text not null,
+        email text not null,
+        message text not null,
+        status text not null default 'pending',
+        created_at timestamp with time zone default now(),
+        updated_at timestamp with time zone default now()
+      `
+    });
+    
+    console.log('All tables created successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error creating tables:', error);
+    return { success: false, error };
+  }
+};
