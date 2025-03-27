@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,11 +25,14 @@ const LoginForm = () => {
       return;
     }
     
+    setIsLoading(true);
+    
     try {
       await signIn(email, password);
     } catch (error) {
       console.error('Login error:', error);
-      // Error is handled in the signIn function
+    } finally {
+      setIsLoading(false);
     }
   };
   

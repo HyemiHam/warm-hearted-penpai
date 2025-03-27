@@ -4,10 +4,8 @@ import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-// Check if we're using placeholder Supabase credentials
-const isUsingMockSupabase = 
-  supabase.supabaseUrl === 'https://placeholder-url.supabase.co' || 
-  supabase.supabaseKey === 'placeholder-key';
+// Check if Supabase credentials are available
+const isUsingRealSupabase = true; // We're now using real Supabase credentials
 
 type AuthContextType = {
   user: any | null;
@@ -29,19 +27,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        if (isUsingMockSupabase) {
-          // Check localStorage for mock auth state when not using real Supabase
-          const mockIsLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-          const mockUserEmail = localStorage.getItem('userEmail');
-          
-          if (mockIsLoggedIn && mockUserEmail) {
-            setUser({ email: mockUserEmail });
-            setIsAuthenticated(true);
-          }
-          setLoading(false);
-          return;
-        }
-
         const { data } = await supabase.auth.getSession();
         setUser(data.session?.user || null);
         setIsAuthenticated(!!data.session?.user);
@@ -54,33 +39,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     fetchUser();
 
-    // Only set up the auth listener if we're using real Supabase
-    if (!isUsingMockSupabase) {
-      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-        setUser(session?.user || null);
-        setIsAuthenticated(!!session?.user);
-        setLoading(false);
-      });
+    // Set up the auth listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user || null);
+      setIsAuthenticated(!!session?.user);
+      setLoading(false);
+    });
 
-      return () => {
-        authListener.subscription.unsubscribe();
-      };
-    }
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
     try {
       setLoading(true);
       
-      if (isUsingMockSupabase) {
-        // Simulate signup for demo purposes
-        console.log('Mock signup with:', { email, password, fullName });
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success('회원가입이 완료되었습니다.');
-        navigate('/login');
-        return;
-      }
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -119,22 +93,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      if (isUsingMockSupabase) {
-        // Simulate login for demo purposes
-        console.log('Mock login with:', { email, password });
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userEmail', email);
-        
-        setUser({ email });
-        setIsAuthenticated(true);
-        
-        toast.success('로그인 되었습니다.');
-        navigate('/dashboard');
-        return;
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -160,21 +118,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      if (isUsingMockSupabase) {
-        // Simulate logout for demo purposes
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userEmail');
-        
-        setUser(null);
-        setIsAuthenticated(false);
-        
-        toast.success('로그아웃 되었습니다.');
-        navigate('/');
-        return;
-      }
-
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
