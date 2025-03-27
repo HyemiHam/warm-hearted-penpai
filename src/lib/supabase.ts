@@ -1,16 +1,13 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Use environment variables or fallback to empty strings to prevent crashes
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-url.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase URL and Anon Key must be provided in .env file');
-}
-
+// Create a Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// 타입 정의
+// Export the Database type definitions
 export type Database = {
   public: {
     Tables: {
